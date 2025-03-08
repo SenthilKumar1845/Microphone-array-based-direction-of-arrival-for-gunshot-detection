@@ -1,0 +1,58 @@
+# Microphone-Based Sound Direction and Distance Estimation
+
+## Project Overview
+This project utilizes MATLAB's Mobile Sensor Connectivity with `mobiledev` to capture and analyze audio signals from a mobile device's microphone. It estimates the direction and distance of a sound source using cross-correlation and FFT analysis. The system can be useful in applications such as voice localization, security surveillance, and environmental monitoring.
+
+## Features
+- **Audio Data Collection**: Uses a mobile device as a microphone source.
+- **Real-Time Logging**: Records audio for a set duration (default: 5 seconds).
+- **Cross-Correlation Analysis**: Computes time difference of arrival (TDOA) between two microphone signals.
+- **Direction Estimation**: Calculates the angle of arrival of the sound source.
+- **Distance Estimation**: Estimates the distance of the sound source using trigonometric calculations.
+- **Fourier Transform (FFT) Analysis**: Provides frequency domain visualization and dominant frequency detection.
+- **Filtered Frequency Response**: Applies a band-pass filter to highlight specific frequency ranges.
+- **Enhanced Visualization**: Generates various plots including time domain signals, frequency spectra, polar plots, and bar charts.
+
+## Hardware Requirements
+- A smartphone with MATLAB Mobile installed (to act as the microphone source)
+- MATLAB with Mobile Sensor support
+- A computer with MATLAB installed
+
+## Software Requirements
+- MATLAB (with Signal Processing Toolbox)
+- Mobile Sensor Support Package
+
+## How It Works
+1. **Audio Logging**: The script enables the mobile microphone, records audio, and processes two-channel data.
+2. **Time-Domain Analysis**: Displays recorded signals from both microphone channels.
+3. **Cross-Correlation**: Determines the time delay between microphone signals and estimates the direction of arrival.
+4. **Distance Estimation**: Uses the speed of sound to calculate the estimated distance of the sound source.
+5. **FFT Analysis**: Extracts dominant frequencies in the recorded signals.
+6. **Filtering**: Applies a band-pass filter to highlight relevant frequency components.
+7. **Visualization**: Provides graphical representations of sound properties and estimated direction/distance.
+
+## Results and Interpretation
+- The system estimates the **angle of arrival** of the sound source using the delay between two microphones.
+- It estimates the **distance** of the sound source using trigonometric calculations.
+- The **dominant frequency** of the recorded audio is detected using FFT analysis.
+- The **polar plot** visualizes the estimated direction of the sound source.
+
+## Potential Applications
+- **Human-Computer Interaction**: Detects speaker direction for voice-activated systems.
+- **Security and Surveillance**: Identifies the source of suspicious noises.
+- **Acoustic Localization**: Tracks sound-emitting objects in an environment.
+- **Smart Home Devices**: Enhances voice assistant response accuracy by determining user location.
+
+## Future Improvements
+- Support for multiple microphone arrays for more accurate localization.
+- Integration with machine learning for noise filtering and classification.
+- Real-time processing on edge devices like Raspberry Pi or Arduino with external microphones.
+
+## How to Use
+1. Connect MATLAB Mobile and ensure microphone access is enabled.
+2. Run the MATLAB script to start recording and analysis.
+3. Observe the results in the form of plots and printed outputs.
+
+## Contribution
+Feel free to fork this repository, improve the code, and submit pull requests for enhancements!
+
