@@ -1,0 +1,192 @@
+close all;
+
+m = mobiledev;
+m.MicrophoneEnabled = 1;
+    
+disp("Logging for 5 seconds");
+disp("Try saying : Life")
+m.Logging = 1;
+pause(5); % Record for 5 seconds
+m.Logging = 0;
+disp("Logging Stopped");
+audioData = readAudio(m);
+mic1 = audioData(:, 1); % Channel 1
+mic2 = audioData(:, 2); % Channel 2
+disp('Maximum sound of the background noise: ')
+threshold = max(abs(mic1), [], "all")
+t = (0:length(mic1)-1) / m.SampleRate; % Time vector
+if ((length(mic1) == 0) | (length(mic2) == 0))
+    disp("No data recorded");
+end
+n = numel(mic2);
+signalLength = n;
+
+figure;
+subplot(4,3,1);
+plot(t, mic1);
+title('Microphone 1');
+xlabel('Time (s)');
+ylabel('Amplitude');
+
+subplot(4,3,2);
+plot(t, mic2);
+title('Microphone 2');
+xlabel('Time (s)');
+ylabel('Amplitude');
+[acor, lag] = xcorr(mic1, mic2);
+[~, I] = max(abs(acor));
+
+sampleRate=m.Microphone.SampleRate;
+timeDiff = lag(I) / sampleRate;
+scale = sampleRate/signalLength;
+subplot(4,3,3);
+plot(lag / sampleRate, acor);
+title('Cross-Correlation between Microphone 1 and 2');
+xlabel('Time Lag (s)');
+ylabel('Correlation');
+grid on;
+
+disp(['Time difference between microphones: ', num2str(timeDiff), ' seconds']);
+
+d= 0.155;%distance between 2 microphones - 15.5 cm
+v = 346; %speed of sound at 25 deg  celcius
+d1 = v * timeDiff; % path difference ? 
+angle_rad = asin(d1/d);
+angle = angle_rad *  (180/pi);
+if (d1> d)
+    disp("(d1>d) : Source is too close / Too low Volume / Microphones too close");
+    disp("(d1>d) : Angle Estimation will not be accuarate. Possibly 90 Degrees");
+end
+
+
+
+if (angle  == 0)
+disp("Source is most likely Directly InFront of Microphone");
+elseif ((angle == 90 ) | (angle == -90))
+disp ("Source is most likely Directly Perpendicular to Microphone");
+end
+c=newline;
+fprintf("\n Estimated Angle : %f Degrees",angle);
+
+dist = d1/(2*sin(angle));
+disp1 = d1/(2*tan(angle));
+
+fprintf("\n Estimated Distance (sine) : %f m",dist)
+c=newline;
+fprintf("\n Estimated Distance (tan) : %f m",disp1)
+
+
+
+% Enhanced Polar plot for visualizing the angle of arrival
+subplot(4,3,4);
+polarplot([0, angle_rad], [0, 1], '-o', 'LineWidth', 2, 'MarkerSize', 8); % Enhanced line and marker
+hold on;
+polarplot([0, 0], [0, 1], '--k'); % Reference line at 0 degrees
+title('Estimated Direction of Arrival'); 
+
+ax = gca;
+ax.ThetaTickLabel = {'0°', '30°', '60°', '90°', '120°', '150°', '180°', '-150°', '-120°', '-90°', '-60°', '-30°'};
+ax.ThetaGrid = 'on'; % Show grid lines
+rticks([]); % Remove radial ticks
+thetaticks(0:30:180); % Theta ticks every 30 degrees
+
+% Convert polar coordinates to Cartesian coordinates for annotation
+[x, y] = pol2cart(angle_rad, 1.1);
+
+% Annotate the estimated angle on the polar plot
+text(x, y, sprintf('Angle: %.2f°', angle), ...
+    'HorizontalAlignment', 'center', ...
+    'VerticalAlignment', 'bottom', ...
+    'FontSize', 12, ...
+    'Color', 'b');
+
+
+
+ % FFT Parameters
+fs = m.SampleRate; % Sampling frequency
+Stream_Length = length(mic1); % Length of the audio stream
+f = (0:Stream_Length-1) * (fs / Stream_Length); % Frequency vector
+
+% Compute FFT of the microphone signals
+mic1_fft = fft(mic1, Stream_Length);
+mic2_fft = fft(mic2, Stream_Length);
+
+% Frequency vector for FFT
+f0 = (-Stream_Length/2:(Stream_Length/2)-1) * (fs / Stream_Length);
+mic1_fft0 = fftshift(mic1_fft);
+mic2_fft0 = fftshift(mic2_fft);
+abs_mic1_fft0 = abs(mic1_fft0);
+abs_mic2_fft0 = abs(mic2_fft0);
+
+% Plot the FFT results
+
+subplot(4,3,5);
+plot(t, mic1);
+title('Microphone 1 Signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
+
+subplot(4,3,6);
+plot(t, mic2);
+title('Microphone 2 Signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
+
+subplot(4,3,7);
+plot(f0, abs_mic1_fft0, 'LineWidth', 1.5);
+xlabel('Frequency (Hz)');
+ylabel('Amplitude');
+title('Frequency Domain of Microphone 1');
+
+subplot(4,3,8);
+plot(f0, abs_mic2_fft0, 'LineWidth', 1.5);
+xlabel('Frequency (Hz)');
+ylabel('Amplitude');
+title('Frequency Domain of Microphone 2');
+
+% Define filter parameters
+filterCutoff = 1000; % Cutoff frequency in Hz
+filter = double(f <= filterCutoff); % Low-pass filter   
+
+% Apply the filter to the FFT results
+filteredMic1_fft = mic1_fft .* filter';
+filteredMic2_fft = mic2_fft .* filter';
+
+% Plot the filtered signals
+
+subplot(4,3,9);
+plot(f0, abs(filteredMic1_fft), 'LineWidth', 1.5);
+xlabel('Frequency (Hz)');
+ylabel('Amplitude');
+title('Filtered Frequency Domain of Microphone 1 (Band-pass 1000-8000 Hz)');
+
+subplot(4,3,10);
+plot(f0, abs(filteredMic2_fft), 'LineWidth', 1.5);
+xlabel('Frequency (Hz)');
+ylabel('Amplitude');
+title('Filtered Frequency Domain of Microphone 2 (Band-pass 1000-8000 Hz)');
+
+
+% Bar plot for estimated distances
+
+ave=(dist+disp1)/2;
+subplot(4,3,11);
+bar(1,ave);
+title('Estimated Distances');
+ylabel('Distance (m)');
+set(gca, 'XTickLabel', 'distance');
+grid on;
+
+subplot(4,3,12);
+bar([dist, disp1]);
+title('Estimated Distance');
+ylabel('Distance (m)');
+set(gca, 'XTickLabel', {'Sine', 'Tan'});
+grid on
+% Clear mobile device object
+clear m;
+[mVal, mInd] = max(mic1_fft);
+c=newline;
+fprintf("\n Dominant frequency: %d Hz\n",floor(mInd * scale))
+
+clear m 
